@@ -145,7 +145,7 @@ public class RegistrationCaptchaFox implements FormAction, FormActionFactory {
         context.getEvent().detail(Details.REGISTER_METHOD, "form");
 
         String captcha = formData.getFirst(CAPTCHA_RESPONSE_KEY);
-        LOGGER.trace("Got captcha: " + captcha);
+        LOGGER.trace("Got captcha response: " + captcha);
 
         if (!Validation.isBlank(captcha)) {
             AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();

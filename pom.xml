@@ -4,13 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.captchafox</groupId>
     <artifactId>keycloak-captchafox</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>Registration Authentication Execution Provider for CaptchaFox</name>
     <description>CaptchaFox is a GDPR compliant bot management solution that protects your website against automated attacks like account takeover and spam.</description>
     <packaging>jar</packaging>
 
     <properties>
-        <version.keycloak>22.0.1</version.keycloak>
+        <version.keycloak>24.0.1</version.keycloak>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
