@@ -46,6 +46,7 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
     public static final String CAPTCHA_RESPONSE_KEY = "cf-captcha-response";
     public static final String SITE_KEY = "site.key";
     public static final String SITE_SECRET = "secret";
+    public static final String BYPASS_ON_ERROR = "bypass-on-error";
     public static final String PROVIDER_ID = "username-password-captchafox";
 
     @Override
@@ -104,13 +105,6 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
         return false;
     }
 
-    // private Response createFailureResponse(AuthenticationFlowContext context,
-    // String errorMessage) {
-    // return context.form()
-    // .setError(errorMessage)
-    // .createErrorPage(Response.Status.UNAUTHORIZED);
-    // }
-
     @Override
     public void action(AuthenticationFlowContext context) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
@@ -118,6 +112,7 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
 
         AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
         String secret = captchaConfig.getConfig().get(SITE_SECRET);
+        Boolean bypassOnError = Boolean.parseBoolean(captchaConfig.getConfig().get(BYPASS_ON_ERROR));
         String captcha = formData.getFirst(CAPTCHA_RESPONSE_KEY);
         LOGGER.trace("Got captcha response: " + captcha);
 
@@ -127,7 +122,7 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
             success = false;
         }
 
-        if (!success) {
+        if (!success && !bypassOnError) {
             context.form().addError(new FormMessage(null, Messages.RECAPTCHA_FAILED));
             Response challengeResponse = buildForm(context);
             context.failure(AuthenticationFlowError.INVALID_CREDENTIALS,
@@ -245,13 +240,11 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-        // never called
         return true;
     }
 
     @Override
     public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {
-        // never called
     }
 
     private static final List<ProviderConfigProperty> CONFIG_PROPERTIES = new ArrayList<ProviderConfigProperty>();
@@ -277,6 +270,12 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
         property.setOptions(Arrays.asList("inline", "popup"));
         property.setDefaultValue("inline");
         property.setHelpText("Display Mode");
+        CONFIG_PROPERTIES.add(property);
+        property = new ProviderConfigProperty();
+        property.setName(BYPASS_ON_ERROR);
+        property.setLabel("Bypass on Error");
+        property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        property.setHelpText("Allows login even if the captcha validation runs into an error");
         CONFIG_PROPERTIES.add(property);
     }
 
