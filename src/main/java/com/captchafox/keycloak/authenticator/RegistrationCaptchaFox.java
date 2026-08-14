@@ -16,39 +16,26 @@
  */
 package com.captchafox.keycloak.authenticator;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.authentication.FormAction;
 import org.keycloak.authentication.FormActionFactory;
 import org.keycloak.authentication.FormContext;
 import org.keycloak.authentication.ValidationContext;
-import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.*;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.provider.ProviderConfigProperty;
-import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
-import org.keycloak.util.JsonSerialization;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public class RegistrationCaptchaFox implements FormAction, FormActionFactory {
     private static final Logger LOGGER = Logger.getLogger(RegistrationCaptchaFox.class);
@@ -114,7 +101,7 @@ public class RegistrationCaptchaFox implements FormAction, FormActionFactory {
 
     @Override
     public String getHelpText() {
-        return "Adds CaptchaFox button. CaptchaFox verifies that the entity that is registering is a human.  This can only be used on the internet and must be configured after you add it.";
+        return "Adds CaptchaFox button. CaptchaFox verifies that the entity that is registering is a human. This can only be used on the internet and must be configured after you add it.";
     }
 
     @Override
@@ -166,31 +153,8 @@ public class RegistrationCaptchaFox implements FormAction, FormActionFactory {
     }
 
     protected boolean validateCaptcha(ValidationContext context, String captcha, String secret) {
-        LOGGER.trace("Verifying CaptchaFox");
-        CloseableHttpClient httpClient = context.getSession().getProvider(HttpClientProvider.class).getHttpClient();
-        HttpPost post = new HttpPost("https://api.captchafox.com/siteverify");
-        List<NameValuePair> formparams = new LinkedList<>();
-        formparams.add(new BasicNameValuePair("secret", secret));
-        formparams.add(new BasicNameValuePair("response", captcha));
-        formparams.add(new BasicNameValuePair("remoteip", context.getConnection().getRemoteAddr()));
-        try {
-            UrlEncodedFormEntity form = new UrlEncodedFormEntity(formparams, "UTF-8");
-            post.setEntity(form);
-            try (CloseableHttpResponse response = httpClient.execute(post)) {
-                InputStream content = response.getEntity().getContent();
-                try {
-                    @SuppressWarnings("rawtypes")
-                    Map json = JsonSerialization.readValue(content, Map.class);
-                    Object val = json.get("success");
-                    return Boolean.TRUE.equals(val);
-                } finally {
-                    EntityUtils.consumeQuietly(response.getEntity());
-                }
-            }
-        } catch (Exception e) {
-            ServicesLogger.LOGGER.recaptchaFailed(e);
-        }
-        return false;
+        return CaptchaFoxVerifier.verify(context.getSession(), context.getConnection().getRemoteAddr(), captcha,
+                secret) == CaptchaFoxVerifier.Result.VALID;
     }
 
     @Override

@@ -1,19 +1,10 @@
 package com.captchafox.keycloak.authenticator;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.authentication.AuthenticationFlowContext;
@@ -21,7 +12,6 @@ import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
 import org.keycloak.authentication.authenticators.browser.AbstractUsernameFormAuthenticator;
-import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticatorConfigModel;
@@ -32,10 +22,8 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
-import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
-import org.keycloak.util.JsonSerialization;
 
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -141,31 +129,8 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
     }
 
     protected boolean validateCaptcha(AuthenticationFlowContext context, String captcha, String secret) {
-        LOGGER.trace("Verifying CaptchaFox");
-        CloseableHttpClient httpClient = context.getSession().getProvider(HttpClientProvider.class).getHttpClient();
-        HttpPost post = new HttpPost("https://api.captchafox.com/siteverify");
-        List<NameValuePair> formparams = new LinkedList<>();
-        formparams.add(new BasicNameValuePair("secret", secret));
-        formparams.add(new BasicNameValuePair("response", captcha));
-        formparams.add(new BasicNameValuePair("remoteip", context.getConnection().getRemoteAddr()));
-        try {
-            UrlEncodedFormEntity form = new UrlEncodedFormEntity(formparams, "UTF-8");
-            post.setEntity(form);
-            try (CloseableHttpResponse response = httpClient.execute(post)) {
-                InputStream content = response.getEntity().getContent();
-                try {
-                    @SuppressWarnings("rawtypes")
-                    Map json = JsonSerialization.readValue(content, Map.class);
-                    Object val = json.get("success");
-                    return Boolean.TRUE.equals(val);
-                } finally {
-                    EntityUtils.consumeQuietly(response.getEntity());
-                }
-            }
-        } catch (Exception e) {
-            ServicesLogger.LOGGER.recaptchaFailed(e);
-        }
-        return false;
+        return CaptchaFoxVerifier.verify(context.getSession(), context.getConnection().getRemoteAddr(), captcha,
+                secret) == CaptchaFoxVerifier.Result.VALID;
     }
 
     protected boolean validateForm(AuthenticationFlowContext context, MultivaluedMap<String, String> formData) {
