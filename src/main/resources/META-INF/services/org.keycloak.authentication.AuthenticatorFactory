@@ -1,1 +1,2 @@
 com.captchafox.keycloak.authenticator.UsernamePasswordForm
+com.captchafox.keycloak.authenticator.CaptchaFoxAuthenticator
