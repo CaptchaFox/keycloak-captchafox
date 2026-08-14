@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.captchafox</groupId>
     <artifactId>keycloak-captchafox</artifactId>
-    <version>1.2.0</version>
-    <name>Registration Authentication Execution Provider for CaptchaFox</name>
-    <description>CaptchaFox is a GDPR compliant bot management solution that protects your website against automated attacks like account takeover and spam.</description>
+    <version>1.3.0</version>
+    <name>Authentication Execution Provider for CaptchaFox</name>
+    <description>CaptchaFox is a GDPR compliant bot management solution that protects your website against automated attacks like bots, spam and AI agents.</description>
     <packaging>jar</packaging>
 
     <properties>
